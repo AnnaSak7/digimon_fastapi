@@ -13,6 +13,7 @@ for row in rows:
     digimon = {}
     # Separate out the data
     number = info[0]
+    digimon['number'] = info[0]
     digimon['digimon'] = info[1]
     digimon['stage'] = info[2]
     digimon['type'] = info[3]

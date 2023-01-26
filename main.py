@@ -9,6 +9,14 @@ app = FastAPI()
 async def root():
     return digimonData
 
+@app.get("/random")
+async def random_digimon():
+    num = random.randint(1, 249)
+    print(f'num is {num}')
+    number = str(num)
+    digimon = digimonData[number]
+    print(f'digimon : {digimon}')
+    return digimon
     
 
 
