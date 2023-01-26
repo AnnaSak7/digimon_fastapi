@@ -14,17 +14,19 @@ async def root():
 
 
 
-# GET /?sort={hp|sp|defence|attack|intelligence|speed}:{desc|asc} -> Sorted list of Digimons, optionally specify ordering by appending `:asc` for ascending or `:desc` for descending. You decide on the default :slightly_smiling_face:
+# GET /?sort={hp|sp|defense|attack|intelligence|speed}:{desc|asc} -> Sorted list of Digimons, optionally specify ordering by appending `:asc` for ascending or `:desc` for descending. You decide on the default :slightly_smiling_face:
+
+sort_options = {"hp": "lv50HP", "sp": "lv50SP", "defense":"lv50Def", "attack":"lv50Atk", "intelligence": "lv50Int", "speed": "lv50Spd" }
 
 @app.get("/sort")
 async def sorting(sort: Optional[str] = None):
     
     list = {}
     for digimon_id in digimonData:
-        list[digimon_id] = digimonData[digimon_id]['lv50HP']
+        list[digimon_id] = digimonData[digimon_id][sort_options[sort]]
     
-    print(f"list : {list}")
     sorted_list = sorted(list.items(), key=operator.itemgetter(1))
+    print(f'sorted_list {sorted_list}')
     
     index = []
     for item in sorted_list:
@@ -34,10 +36,10 @@ async def sorting(sort: Optional[str] = None):
 
     sorted_digimons = {}
     for number in index:
-        print(f'number is : {number}')
+        # print(f'number is : {number}')
         sorted_digimons[number] = digimonData[number]
     
-    print(f'sorted digimons is : {sorted_digimons}') 
+    # print(f'sorted digimons is : {sorted_digimons}') 
     return sorted_digimons
 
 
@@ -54,8 +56,9 @@ def get_digimon(name: Optional[str] = None):
 # GET /:number -> Ger Digimon med det numret om den finns, 404 annars
 @app.get("/{digimon_id}", status_code=status.HTTP_200_OK)
 async def specific_digimon(digimon_id):
-    if int(digimon_id) < 1 or int(digimon_id) > 249:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    # if int(digimon_id) < 1 or int(digimon_id) > 249:
+    if digimon_id not in digimonData:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Digimon id does not exist')
         
     return digimonData[digimon_id]
 
