@@ -18,12 +18,15 @@ app = FastAPI()
 
 sort_options = {"hp": "lv50HP", "sp": "lv50SP", "defense":"lv50Def", "attack":"lv50Atk", "intelligence": "lv50Int", "speed": "lv50Spd" }
 
-def sort_func(dataset, field:str):
+def sort_func(dataset, field:str, direction:str):
     list = {}
     for digimon_id in digimonData:
         list[digimon_id] = dataset[digimon_id][field]
     
-    sorted_list = sorted(list.items(), key=operator.itemgetter(1))
+    if direction == 'asc':
+        sorted_list = sorted(list.items(), key=operator.itemgetter(1))
+    elif direction =='desc':
+        sorted_list = sorted(list.items(), key=operator.itemgetter(1), reverse=True)
     
     index = []
     for item in sorted_list:
@@ -53,8 +56,21 @@ async def root(*, sort: Optional[str] = None, stage: Optional[str] = None, type:
     # 'Optional & None' is making query as optional since by default it is required
     
     if sort:
-        category = sort_options[sort]
-        sorted_data = sort_func(digimonData, category)
+        asc = re.search(":asc", sort)
+        desc = re.search(":desc", sort)
+        
+        if asc or desc:
+            colon = sort.find(":")
+            sort_word = sort[0:colon]
+            print(sort)
+            category = sort_options[sort_word]
+            if asc:
+                sorted_data = sort_func(digimonData, category, "asc")
+            else:
+                sorted_data = sort_func(digimonData, category, 'desc')
+        else: 
+            category = sort_options[sort]
+            sorted_data = sort_func(digimonData, category, 'asc')
 
         if not category:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Sort option not found')
