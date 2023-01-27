@@ -3,6 +3,7 @@ from data import digimonData
 from typing import Optional
 import random
 import operator
+import re
 
 
 app = FastAPI()
@@ -17,7 +18,7 @@ app = FastAPI()
 
 sort_options = {"hp": "lv50HP", "sp": "lv50SP", "defense":"lv50Def", "attack":"lv50Atk", "intelligence": "lv50Int", "speed": "lv50Spd" }
 
-def sort_func(dataset, field):
+def sort_func(dataset, field:str):
     list = {}
     for digimon_id in digimonData:
         list[digimon_id] = dataset[digimon_id][field]
@@ -34,23 +35,51 @@ def sort_func(dataset, field):
     
     return sorted_digimons
 
+
+# GET /?stage=…-> Returns all Digimons of a certain stage
+# GET /?type=…-> Returns all Digimons of a certain type
+# GET /?attribute=…-> Returns all Digimons of a certain attribute
+
+def type_stage_func(dataset, field:str, value:str):
+    new_dataset = {}
+    for digimon_id in dataset:
+                if dataset[digimon_id][field].lower() == value.lower():
+                    new_dataset[digimon_id] = dataset[digimon_id]
+    return new_dataset
+    
+
 @app.get("/")
 async def root(*, sort: Optional[str] = None, stage: Optional[str] = None, type: Optional[str] = None):
-    # 'Optional & None is making query as optional since by default it is required
+    # 'Optional & None' is making query as optional since by default it is required
     
     if not sort and not type and not stage:
         return digimonData
     
-    if sort not in sort_options:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Sort option not found')
-
-    else:
+    elif sort:
         category = sort_options[sort]
-        return sort_func(digimonData, category)
+        sorted_data = sort_func(digimonData, category)
+
+        if not category:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Sort option not found')
+        elif type:
+            sorted_type_data = type_stage_func(sorted_data, "type", type)
+       
+            
+            if stage:
+                sorted_type_stage_data = {}
+                for digimon_id in sorted_type_data:
+                    if sorted_type_data[digimon_id]['stage'] == stage:
+                      sorted_type_stage_data[digimon_id] = sorted_type_data[digimon_id]
+                return sorted_type_stage_data  
+            
+            return sorted_type_data
+        elif stage:
+            sorted_stage_data = type_stage_func(sorted_data, "stage", stage)
+            
+            return sorted_stage_data
+        else:
+            return sorted_data
     
-
-
-
 
 
 @app.get("/get-by-name")
@@ -85,11 +114,5 @@ async def random_digimon():
     return digimon
     
 
-
-# Listing Digimons
-
-# GET /?stage=…                                                                                   -> Returns all Digimons of a certain stage
-# GET /?type=…                                                                                     -> Returns all Digimons of a certain type
-# GET /?attribute=…                                                                              -> Returns all Digimons of a certain attribute
 
 
