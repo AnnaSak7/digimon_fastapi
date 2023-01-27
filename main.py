@@ -8,39 +8,50 @@ import operator
 app = FastAPI()
 
 #GET / -> Ger en lista med alla Digimons
-@app.get("/")
-async def root():
-    return digimonData
-
+# @app.get("/")
+# async def root():
+#     return digimonData
 
 
 # GET /?sort={hp|sp|defense|attack|intelligence|speed}:{desc|asc} -> Sorted list of Digimons, optionally specify ordering by appending `:asc` for ascending or `:desc` for descending. You decide on the default :slightly_smiling_face:
 
 sort_options = {"hp": "lv50HP", "sp": "lv50SP", "defense":"lv50Def", "attack":"lv50Atk", "intelligence": "lv50Int", "speed": "lv50Spd" }
 
-@app.get("/sort")
-async def sorting(sort: Optional[str] = None):
-    
+def sort(dataset, level):
     list = {}
     for digimon_id in digimonData:
-        list[digimon_id] = digimonData[digimon_id][sort_options[sort]]
+        list[digimon_id] = dataset[digimon_id][level]
     
     sorted_list = sorted(list.items(), key=operator.itemgetter(1))
-    print(f'sorted_list {sorted_list}')
     
     index = []
     for item in sorted_list:
         index.append(item[0])
         
-    print(f"index list : {index}")
-
     sorted_digimons = {}
     for number in index:
-        # print(f'number is : {number}')
-        sorted_digimons[number] = digimonData[number]
+        sorted_digimons[number] = dataset[number]
     
-    # print(f'sorted digimons is : {sorted_digimons}') 
     return sorted_digimons
+
+@app.get("/")
+async def root(*, sort: Optional[str] = None, stage: Optional[str] = None, type: Optional[str] = None):
+    # 'Optional & None is making query as optional since by default it is required
+    
+    if not sort and not type and not stage:
+        return digimonData
+    
+    if sort not in sort_options:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Sort option not found')
+
+    else:
+        category = sort_options[sort]
+        sort(digimonData, category)
+        
+    
+
+
+
 
 
 @app.get("/get-by-name")
