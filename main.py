@@ -17,10 +17,10 @@ app = FastAPI()
 
 sort_options = {"hp": "lv50HP", "sp": "lv50SP", "defense":"lv50Def", "attack":"lv50Atk", "intelligence": "lv50Int", "speed": "lv50Spd" }
 
-def sort(dataset, level):
+def sort_func(dataset, field):
     list = {}
     for digimon_id in digimonData:
-        list[digimon_id] = dataset[digimon_id][level]
+        list[digimon_id] = dataset[digimon_id][field]
     
     sorted_list = sorted(list.items(), key=operator.itemgetter(1))
     
@@ -46,8 +46,7 @@ async def root(*, sort: Optional[str] = None, stage: Optional[str] = None, type:
 
     else:
         category = sort_options[sort]
-        sort(digimonData, category)
-        
+        return sort_func(digimonData, category)
     
 
 
