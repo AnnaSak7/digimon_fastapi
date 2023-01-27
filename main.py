@@ -40,7 +40,7 @@ def sort_func(dataset, field:str):
 # GET /?type=…-> Returns all Digimons of a certain type
 # GET /?attribute=…-> Returns all Digimons of a certain attribute
 
-def type_stage_func(dataset, field:str, value:str):
+def extract_func(dataset, field:str, value:str):
     new_dataset = {}
     for digimon_id in dataset:
                 if dataset[digimon_id][field].lower() == value.lower():
@@ -49,36 +49,41 @@ def type_stage_func(dataset, field:str, value:str):
     
 
 @app.get("/")
-async def root(*, sort: Optional[str] = None, stage: Optional[str] = None, type: Optional[str] = None):
+async def root(*, sort: Optional[str] = None, stage: Optional[str] = None, type: Optional[str] = None, attribute: Optional[str] = None):
     # 'Optional & None' is making query as optional since by default it is required
     
-    if not sort and not type and not stage:
-        return digimonData
-    
-    elif sort:
+    if sort:
         category = sort_options[sort]
         sorted_data = sort_func(digimonData, category)
 
         if not category:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Sort option not found')
-        elif type:
-            sorted_type_data = type_stage_func(sorted_data, "type", type)
-       
-            
-            if stage:
-                sorted_type_stage_data = {}
-                for digimon_id in sorted_type_data:
-                    if sorted_type_data[digimon_id]['stage'] == stage:
-                      sorted_type_stage_data[digimon_id] = sorted_type_data[digimon_id]
-                return sorted_type_stage_data  
-            
-            return sorted_type_data
-        elif stage:
-            sorted_stage_data = type_stage_func(sorted_data, "stage", stage)
-            
-            return sorted_stage_data
         else:
             return sorted_data
+    elif type:
+        sorted_type_data = extract_func(digimonData, "type", type)
+    
+        
+        if stage:
+            sorted_type_stage_data = {}
+            for digimon_id in sorted_type_data:
+                if sorted_type_data[digimon_id]['stage'] == stage:
+                    sorted_type_stage_data[digimon_id] = sorted_type_data[digimon_id]
+            return sorted_type_stage_data  
+        
+        return sorted_type_data
+    elif stage:
+        sorted_stage_data = extract_func(digimonData, "stage", stage)
+        
+        return sorted_stage_data
+    
+    elif attribute:
+        sorted_attribute_data = extract_func(digimonData, "attribute", attribute)
+        
+        return sorted_attribute_data
+    # if not sort and not type and not stage:
+    else:
+        return digimonData
     
 
 
